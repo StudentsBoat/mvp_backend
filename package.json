@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "supabase": "^2.34.3",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
@@ -36,6 +37,16 @@
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "@types/bcryptjs": "^2.4.6"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "moduleFileExtensions": ["ts", "js", "json"],
+    "testMatch": ["**/src/tests/**/*.ts"]
   }
 }

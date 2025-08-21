@@ -16,11 +16,19 @@
  *           type: string
  *           minLength: 4
  *           example: secret123
+ *     RefreshToken:
+ *       type: object
+ *       required:
+ *         - refresh_token
+ *       properties:
+ *         refresh_token:
+ *           type: string
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
 
 /**
  * @swagger
- * /auth/register:
+ * /user/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Auth]
@@ -39,7 +47,7 @@
 
 /**
  * @swagger
- * /auth/login:
+ * /user/login:
  *   post:
  *     summary: Login a user
  *     tags: [Auth]
@@ -58,7 +66,7 @@
 
 /**
  * @swagger
- * /auth/forgot-password:
+ * /user/forgot-password:
  *   post:
  *     summary: Request password reset
  *     tags: [Auth]
@@ -81,4 +89,24 @@
  *       400:
  *         description: Invalid email
  */
+
+/**
+ * @swagger
+ * /user/refresh-token:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshToken'
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       400:
+ *         description: Invalid refresh token
+ */
+
 export {};

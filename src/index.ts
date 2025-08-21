@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import usersRoutes from "./routes/users";
+import userRoutes from "./routes/user";
 import { notFound } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 import swaggerUi from "swagger-ui-express";
