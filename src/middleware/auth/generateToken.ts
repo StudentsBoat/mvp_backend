@@ -1,17 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import { supabase } from "../../config/supabaseClient";
+import jwt from "jsonwebtoken";
 
-export const generateTokenMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body;
+// Make sure to set JWT_SECRET in your .env file
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required" });
-  }
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) return res.status(400).json({ error: error.message });
-
-  (req as any).authData = data; // contains user + session + token
-  next();
-};
+export const generateToken = (email: string, userId: string): string => {
+  const token = jwt.sign(
+    { userId, email },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+  return `Bearer ${token}`;
+}

@@ -1,38 +1,63 @@
 import { Request, Response } from "express";
-import { supabase } from "../config/supabaseClient";
+import { createSignUpUser, findUserByEmail } from "../models/user";
+import { comparePassword, hashPassword } from "../services/bcrypt";
+import { generateToken } from "../middleware/auth/generateToken";
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password }: any  = req.body;
-  const { user } = req as any;
+  const { email, password }: any = req.body;
 
-  const userId = user?.id;
+  try {
+    // Check if user already exists
+    const existingUser = await  await findUserByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
 
-  // You can add more fields as needed
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .insert([{ id: userId, email, password_hash: password }])
-    .select();
+    // Hash password
+    const passwordHash = await hashPassword(password);
 
-  if (userError) return res.status(400).json({ error: userError.message });
+    // Create user
+    const user = await createSignUpUser(email, passwordHash);
 
-  return res.json({
-    message: "Signup successful! Please verify your email.",
-    user: userData?.[0],
-  });
+    return res.json({
+      message: "Signup successful! Please verify your email.",
+      user,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Internal server error" });
+  }
 };
 
 export const login = async (req: Request, res: Response) => {
-  const { authData } = req as any;
-  return res.json({ message: "Login successful", data: authData });
+  const { email, password }: any = req.body;
+
+  try {
+    // Find user by email
+    const user: any = await findUserByEmail(email);
+    if (!user) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // Compare password
+    const isMatch = await comparePassword(password, user.password)
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    const token = await generateToken(email, user.id);
+
+    return res.json({ message: "Login successful", user: { userId: user.id, email: user.email, token} });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Internal server error" });
+  }
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {
-  const { email } = req.body;
-  const { user } = req as any;
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "http://localhost:3000/reset-password",
-  });
-
-  if (error) return res.status(400).json({ error: error.message });
-  return res.json({ message: "Password reset email sent", data });
+  try {
+    const { user } = req as any;
+    // Implement your password reset logic here (e.g., send email with reset link)
+    return res.json({ message: "Password reset functionality not implemented.", user });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };

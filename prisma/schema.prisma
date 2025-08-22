@@ -1,0 +1,168 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================= Enums =========================
+enum UserRole {
+  ADMIN
+  HOST
+  STUDENT
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum PropertyStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ========================= Models =========================
+model User {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String           @unique
+  password           String
+  role               UserRole         @default(USER)
+  status             UserStatus       @default(ACTIVE)
+  created_at         DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime         @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  profile            UserProfile?
+  properties         Property[]       @relation("UserProperties")
+  modifiedProperties Property[]       @relation("UserModifiedProperties")
+  mediaUploads       PropertyMedia[]  @relation("UserMediaUploads")
+}
+
+model UserProfile {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String   @unique @db.Uuid
+  full_name   String?
+  phone       String?
+  avatar_url  String?
+  bio         String?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Property {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  host_id          String              @db.Uuid
+  title            String
+  description      String?
+  status           PropertyStatus      @default(DRAFT)
+  last_modified_by String?             @db.Uuid
+  created_at       DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime            @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  host             User                @relation("UserProperties", fields: [host_id], references: [id])
+  modifiedBy       User?               @relation("UserModifiedProperties", fields: [last_modified_by], references: [id])
+  addresses        PropertyAddress[]
+  media            PropertyMedia[]
+  amenities        PropertyAmenity[]
+}
+
+model PropertyAddress {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId              String   @db.Uuid
+  street_address          String
+  apartment_unit          String?
+  city                    String
+  state_province          String
+  postal_code             String
+  country                 String   @db.VarChar(3)
+  neighborhood            String?
+  neighborhood_description String?
+  latitude                Decimal? @db.Decimal(10, 8)
+  longitude               Decimal? @db.Decimal(11, 8)
+  geocoding_accuracy      String?
+  is_verified             Boolean  @default(false)
+  verification_method     String?
+  verified_at             DateTime? @db.Timestamptz(6)
+  show_exact_address      Boolean  @default(false)
+  address_display_level   String   @default("neighborhood")
+  created_at              DateTime @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  property                Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model PropertyMedia {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId        String   @db.Uuid
+  media_type        String
+  file_url          String
+  file_path         String
+  original_filename String?
+  file_size         BigInt?
+  mime_type         String?
+  file_hash         String?
+  width             Int?
+  height            Int?
+  duration_seconds  Int?
+  title             String?
+  description       String?
+  alt_text          String?
+  display_order     Int      @default(0)
+  is_cover_photo    Boolean  @default(false)
+  is_featured       Boolean  @default(false)
+  ai_analysis_score Int?
+  ai_analysis_data  Json     @default("{}")
+  quality_factors   Json     @default("{}")
+  recommendations   Json     @default("[]")
+  upload_status     String   @default("pending")
+  uploaded_by       String?  @db.Uuid
+  upload_ip         String?  @db.Inet
+  processing_status String   @default("pending")
+  thumbnail_url     String?
+  compressed_url    String?
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  uploader          User?    @relation("UserMediaUploads", fields: [uploaded_by], references: [id])
+}
+
+model PropertyAmenity {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId              String   @db.Uuid
+  amenity_type            String
+  amenity_name            String
+  category                String
+  description             String?
+  specifications          String?
+  location_in_property    String?
+  is_shared               Boolean  @default(false)
+  is_available_24_7       Boolean  @default(true)
+  access_restrictions     String?
+  booking_impact_percentage Decimal? @db.Decimal(5,2)
+  priority_level          String?
+  student_appeal_score    Int?
+  additional_fee          Decimal  @default(0) @db.Decimal(8,2)
+  fee_type                String?
+  requires_verification   Boolean  @default(false)
+  compliance_standards    Json     @default("[]")
+  created_at              DateTime @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  property                Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
