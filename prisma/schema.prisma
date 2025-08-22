@@ -38,6 +38,7 @@ model User {
   status             UserStatus       @default(ACTIVE)
   created_at         DateTime         @default(now()) @db.Timestamptz(6)
   updated_at         DateTime         @updatedAt @db.Timestamptz(6)
+  is_email_verified  Boolean          @default(false)
 
   // Relations
   profile            UserProfile?
